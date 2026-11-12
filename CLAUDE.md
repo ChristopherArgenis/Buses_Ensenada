@@ -13,8 +13,10 @@ trazan sobre OpenStreetMap.
   1. Ruta 1: El Sauzal
   2. Ruta 2: Maneadero
   3. Ruta 3: Valle de Guadalupe
-- **Transportes El Vigía**: Calle Sexta 566, Zona Centro, 22800 (se asume que es la
-  terminal Azul; confirmar; falta coordenada exacta).
+- **Transportes El Vigía = terminal Azul**: Calle Sexta 566, Zona Centro, 22800.
+  Coordenada: `31.867472, -116.623460`.
+- Rojo y Azul tienen **salidas separadas** y sus rutas **no comparten destino**
+  (ninguna ruta Roja va a El Sauzal, Maneadero ni Valle de Guadalupe).
 
 ## Estructura
 - `docs/` → sitio estático (GitHub Pages). `docs/index.html` es el mapa (Leaflet + OSM).
