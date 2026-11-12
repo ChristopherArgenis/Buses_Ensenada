@@ -1,0 +1,27 @@
+# Contexto del proyecto: Buses Ensenada
+
+Mapeo de las rutas de autobús de Ensenada, B.C., México. No hay datos oficiales:
+las rutas se capturan a partir de lo que el usuario conoce (calles en orden) y se
+trazan sobre OpenStreetMap.
+
+## Hechos confirmados por el usuario
+- Hay **4 estaciones**, cada una con su color: **Rojo, Azul, Amarillo, Naranja**.
+  Cada estación tiene sus propias rutas; algunas rutas se parecen entre estaciones.
+- **Enfoque actual: Rojo y Azul.** Amarillo y Naranja quedan para después.
+- **Rojo**: el usuario los usa más. Parada en Calle Sexta: `31.868357, -116.624647`.
+- **Azul**: solo 3 rutas, extensas, todas salen del centro:
+  1. Ruta 1: El Sauzal
+  2. Ruta 2: Maneadero
+  3. Ruta 3: Valle de Guadalupe
+- **Transportes El Vigía**: Calle Sexta 566, Zona Centro, 22800 (se asume que es la
+  terminal Azul; confirmar; falta coordenada exacta).
+
+## Estructura
+- `docs/` → sitio estático (GitHub Pages). `docs/index.html` es el mapa (Leaflet + OSM).
+- `docs/datos/estaciones.json` → catálogo de estaciones, terminales y rutas.
+- `docs/datos/rutas/<estacion>-<n>.geojson` → trazo de cada ruta (LineString).
+
+## Reglas
+- No inventar coordenadas ni calles: lo no confirmado va como `null` o "por confirmar".
+- Coordenadas en JSON del catálogo: `[lat, lon]`. En GeoJSON: `[lon, lat]` (estándar).
+- Textos en español.

@@ -1,0 +1,54 @@
+{
+  "_nota": "Catálogo de estaciones (sistemas de autobuses) de Ensenada. Cada estación tiene su color y sus propias rutas. Coordenadas en [latitud, longitud]; null = pendiente de confirmar.",
+  "estaciones": [
+    {
+      "id": "rojo",
+      "nombre": "Estación Roja",
+      "color": "#d32f2f",
+      "prioridad": true,
+      "terminal": {
+        "descripcion": "Parada de los autobuses rojos sobre Calle Sexta, Zona Centro",
+        "coordenadas": [31.868357, -116.624647],
+        "fuente": "Usuario (coordenada exacta)"
+      },
+      "rutas": [],
+      "notas": "El usuario usa principalmente esta estación. Rutas por capturar."
+    },
+    {
+      "id": "azul",
+      "nombre": "Estación Azul",
+      "color": "#1565c0",
+      "prioridad": true,
+      "operador": "Transportes El Vigía (por confirmar que corresponde a la Estación Azul)",
+      "terminal": {
+        "descripcion": "Transportes El Vigía, Calle Sexta 566, Zona Centro, 22800 Ensenada, B.C.",
+        "coordenadas": null,
+        "fuente": "Usuario (dirección; falta coordenada exacta)"
+      },
+      "rutas": [
+        { "id": "azul-1", "nombre": "Ruta 1: El Sauzal", "origen": "Centro", "destino": "El Sauzal", "estado": "pendiente de trazar" },
+        { "id": "azul-2", "nombre": "Ruta 2: Maneadero", "origen": "Centro", "destino": "Maneadero", "estado": "pendiente de trazar" },
+        { "id": "azul-3", "nombre": "Ruta 3: Valle de Guadalupe", "origen": "Centro", "destino": "Valle de Guadalupe", "estado": "pendiente de trazar" }
+      ],
+      "notas": "Solo 3 rutas, todas extensas (interurbanas) y parten del centro."
+    },
+    {
+      "id": "amarillo",
+      "nombre": "Estación Amarilla",
+      "color": "#f9a825",
+      "prioridad": false,
+      "terminal": { "descripcion": null, "coordenadas": null, "fuente": null },
+      "rutas": [],
+      "notas": "Fuera de alcance por ahora."
+    },
+    {
+      "id": "naranja",
+      "nombre": "Estación Naranja",
+      "color": "#ef6c00",
+      "prioridad": false,
+      "terminal": { "descripcion": null, "coordenadas": null, "fuente": null },
+      "rutas": [],
+      "notas": "Fuera de alcance por ahora."
+    }
+  ]
+}
