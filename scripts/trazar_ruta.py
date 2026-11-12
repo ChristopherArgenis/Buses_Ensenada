@@ -21,7 +21,7 @@ import urllib.request
 from pathlib import Path
 
 RAIZ = Path(__file__).resolve().parent.parent
-CACHE = RAIZ / "cache" / "calles_ensenada.json"
+CACHE = RAIZ / "osm" / "calles_ensenada.json"
 # Caja que cubre la mancha urbana de Ensenada (sur, oeste, norte, este).
 BBOX = (31.78, -116.70, 31.95, -116.52)
 OVERPASS = "https://overpass-api.de/api/interpreter"
