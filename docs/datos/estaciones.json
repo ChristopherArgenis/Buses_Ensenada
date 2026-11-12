@@ -7,14 +7,22 @@
       "color": "#d32f2f",
       "prioridad": true,
       "terminal": {
-        "descripcion": "Parada de los autobuses rojos sobre Calle Sexta, Zona Centro",
+        "descripcion": "Calle Sexta 470, Zona Centro (parada de los autobuses rojos)",
         "coordenadas": [
           31.868357,
           -116.624647
         ],
         "fuente": "Usuario (coordenada exacta)"
       },
-      "rutas": [],
+      "rutas": [
+        {
+          "id": "rojo-ampliacion-indeco",
+          "nombre": "Ampliación Indeco",
+          "origen": "Centro (Calle Sexta)",
+          "destino": "Ampliación Indeco (C. Cucapah)",
+          "estado": "capturada; trazo pendiente"
+        }
+      ],
       "notas": "El usuario usa principalmente esta estación. Rutas por capturar."
     },
     {
