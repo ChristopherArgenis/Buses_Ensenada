@@ -21,7 +21,18 @@ trazan sobre OpenStreetMap.
 ## Estructura
 - `docs/` → sitio estático (GitHub Pages). `docs/index.html` es el mapa (Leaflet + OSM).
 - `docs/datos/estaciones.json` → catálogo de estaciones, terminales y rutas.
-- `docs/datos/rutas/<estacion>-<n>.geojson` → trazo de cada ruta (LineString).
+- `docs/datos/capturas/<id>.json` → ruta dictada por el usuario (calles en orden).
+  Campo opcional `osm` por paso: nombre(s) exactos en OSM, o `null` si la calle no existe en OSM.
+- `docs/datos/rutas/<id>.geojson` → trazo generado (LineString de ida y de regreso).
+- `osm/calles_ensenada.json` → calles con nombre de OSM (Overpass). Se descarga del espejo
+  `overpass.kumi.systems`: `overpass-api.de` corta la conexión desde la nube y desde Colab.
+- `scripts/trazar_ruta.py <captura>` → genera el GeoJSON e imprime el recorrido calle por calle.
+
+## Rutas
+- **Rojo / Ampliación Indeco**: trazada, 11.03 km de ida; regresa por las mismas calles.
+  Equivalencias en OSM: Castañedo → Calle Castaño; "Alhelí" (bajando desde Nogales) → Calle
+  de los Alhelíes; "Av. Alhelíes" (de Castaño a Pino) → Calle Alhelíes. "Albatros" no existe
+  en OSM: el trazo usa Flamingo entre Blvd. Kumiai y Cisne (por confirmar).
 
 ## Reglas
 - No inventar coordenadas ni calles: lo no confirmado va como `null` o "por confirmar".

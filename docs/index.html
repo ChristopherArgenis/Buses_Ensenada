@@ -31,6 +31,8 @@ L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
   attribution: '&copy; colaboradores de OpenStreetMap'
 }).addTo(mapa);
 
+const limites = L.latLngBounds([]);
+
 fetch('datos/estaciones.json')
   .then(r => r.json())
   .then(({ estaciones }) => {
@@ -52,8 +54,13 @@ fetch('datos/estaciones.json')
       }
       for (const r of e.rutas) {
         fetch(`datos/rutas/${r.id}.geojson`).then(x => x.ok ? x.json() : null).then(g => {
-          if (g) L.geoJSON(g, { style: { color: e.color, weight: 5, opacity: .8 } })
-            .addTo(mapa).bindPopup(`<b>${r.nombre}</b>`);
+          if (!g) return;
+          const ida = { ...g, features: g.features.filter(f => (f.properties || {}).sentido !== 'regreso') };
+          const capa = L.geoJSON(ida, { style: { color: e.color, weight: 5, opacity: .85 } })
+            .addTo(mapa)
+            .bindPopup(f => `<b>${r.nombre}</b><br>${f.feature.properties.km ? f.feature.properties.km + ' km de ida' : ''}`);
+          limites.extend(capa.getBounds());
+          mapa.fitBounds(limites, { padding: [30, 30] });
         }).catch(() => {});
       }
     }

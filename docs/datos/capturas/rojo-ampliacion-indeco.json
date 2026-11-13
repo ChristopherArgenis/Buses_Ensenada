@@ -5,37 +5,138 @@
   "fuente": "Usuario (la usa siempre, dictada de memoria)",
   "inicio": {
     "descripcion": "Calle Sexta 470, Zona Centro, 22800 (terminal Roja)",
-    "coordenadas": [31.868357, -116.624647]
+    "coordenadas": [
+      31.868357,
+      -116.624647
+    ]
   },
   "regreso": "Vuelve por las mismas calles en orden inverso, desde C. Cucapah hasta el Centro.",
   "ida": [
-    { "calle": "Calle Sexta", "accion": "sale de la terminal" },
-    { "calle": "Av. Gastélum", "punto": [31.867598, -116.624298] },
-    { "calle": "Av. Juárez", "accion": "toda la Juárez" },
-    { "calle": "Av. Reforma", "accion": "vuelta para entrar" },
-    { "calle": "C. Alisos", "accion": "vuelta" },
-    { "calle": "C. Constituyentes de 1917", "accion": "vuelta a la izquierda" },
-    { "calle": "Calle Robles", "accion": "sube" },
-    { "calle": "C. Nogales", "accion": "baja" },
-    { "calle": "Alhelí", "accion": "baja" },
-    { "calle": "C. De las Moras", "accion": "sube" },
-    { "calle": "Av. Araucaria", "accion": "vuelta a la derecha" },
-    { "calle": "Calle Caoba", "accion": "sube" },
-    { "calle": "C. Amapola", "accion": "vuelta a la derecha" },
-    { "calle": "C. Castañedo", "accion": "sube" },
-    { "calle": "Av. Alhelíes", "accion": "vuelta a la derecha" },
-    { "calle": "C. Pino", "accion": "vuelta a la izquierda" },
-    { "calle": "Blvd. Geranios", "accion": "sube y vuelta a la derecha" },
-    { "calle": "C. Cucapah", "accion": "vuelta a la izquierda" },
-    { "calle": "C. Guaycura", "accion": "vuelta a la derecha" },
-    { "calle": "Calle Santa Isabel", "accion": "vuelta a la derecha" },
-    { "calle": "Blvd. Kumiai", "accion": "se incorpora" },
-    { "calle": "Albatros", "accion": "hacia Albatros" },
-    { "calle": "Cisne", "accion": "vuelta a la derecha y baja" },
-    { "calle": "Pato", "accion": "vuelta a la izquierda y baja" },
-    { "calle": "C. Baja California Sur", "accion": "vuelta a la derecha" },
-    { "calle": "Blvd. Circuito Oriente", "accion": "vuelta a la derecha y sube" },
-    { "calle": "Av. Kiliwas", "accion": "sube por una rampa para incorporarse" },
-    { "calle": "C. Cucapah", "accion": "vuelta a la izquierda (fin de la ida)" }
+    {
+      "calle": "Calle Sexta",
+      "accion": "sale de la terminal"
+    },
+    {
+      "calle": "Av. Gastélum",
+      "punto": [
+        31.867598,
+        -116.624298
+      ]
+    },
+    {
+      "calle": "Av. Juárez",
+      "accion": "toda la Juárez"
+    },
+    {
+      "calle": "Av. Reforma",
+      "accion": "vuelta para entrar"
+    },
+    {
+      "calle": "C. Alisos",
+      "accion": "vuelta"
+    },
+    {
+      "calle": "C. Constituyentes de 1917",
+      "accion": "vuelta a la izquierda",
+      "osm": [
+        "Avenida Constituyentes de 1917",
+        "Constituyentes de 1917 Nigromante"
+      ]
+    },
+    {
+      "calle": "Calle Robles",
+      "accion": "sube"
+    },
+    {
+      "calle": "C. Nogales",
+      "accion": "baja"
+    },
+    {
+      "calle": "Alhelí",
+      "accion": "baja",
+      "osm": "Calle de los Alhelíes"
+    },
+    {
+      "calle": "C. De las Moras",
+      "accion": "sube"
+    },
+    {
+      "calle": "Av. Araucaria",
+      "accion": "vuelta a la derecha"
+    },
+    {
+      "calle": "Calle Caoba",
+      "accion": "sube"
+    },
+    {
+      "calle": "C. Amapola",
+      "accion": "vuelta a la derecha"
+    },
+    {
+      "calle": "C. Castañedo",
+      "accion": "sube",
+      "osm": "Calle Castaño",
+      "nota": "En OSM se llama \"Calle Castaño\" (por confirmar con el usuario)"
+    },
+    {
+      "calle": "Av. Alhelíes",
+      "accion": "vuelta a la derecha",
+      "osm": "Calle Alhelíes"
+    },
+    {
+      "calle": "C. Pino",
+      "accion": "vuelta a la izquierda"
+    },
+    {
+      "calle": "Blvd. Geranios",
+      "accion": "sube y vuelta a la derecha"
+    },
+    {
+      "calle": "C. Cucapah",
+      "accion": "vuelta a la izquierda"
+    },
+    {
+      "calle": "C. Guaycura",
+      "accion": "vuelta a la derecha"
+    },
+    {
+      "calle": "Calle Santa Isabel",
+      "accion": "vuelta a la derecha"
+    },
+    {
+      "calle": "Blvd. Kumiai",
+      "accion": "se incorpora"
+    },
+    {
+      "calle": "Albatros",
+      "accion": "hacia Albatros",
+      "osm": null,
+      "nota": "No existe en OSM con ese nombre; se cruza con un tramo puente entre Blvd. Kumiai y Cisne"
+    },
+    {
+      "calle": "Cisne",
+      "accion": "vuelta a la derecha y baja"
+    },
+    {
+      "calle": "Pato",
+      "accion": "vuelta a la izquierda y baja"
+    },
+    {
+      "calle": "C. Baja California Sur",
+      "accion": "vuelta a la derecha"
+    },
+    {
+      "calle": "Blvd. Circuito Oriente",
+      "accion": "vuelta a la derecha y sube",
+      "osm": "Libramiento Circuito Oriente"
+    },
+    {
+      "calle": "Av. Kiliwas",
+      "accion": "sube por una rampa para incorporarse"
+    },
+    {
+      "calle": "C. Cucapah",
+      "accion": "vuelta a la izquierda (fin de la ida)"
+    }
   ]
 }

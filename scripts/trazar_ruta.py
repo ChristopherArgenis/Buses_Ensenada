@@ -24,7 +24,7 @@ RAIZ = Path(__file__).resolve().parent.parent
 CACHE = RAIZ / "osm" / "calles_ensenada.json"
 # Caja que cubre la mancha urbana de Ensenada (sur, oeste, norte, este).
 BBOX = (31.78, -116.70, 31.95, -116.52)
-OVERPASS = "https://overpass-api.de/api/interpreter"
+OVERPASS = "https://overpass.kumi.systems/api/interpreter"
 
 PREFIJOS = r"^(calle|c|av|avenida|blvd|boulevard|bulevar|privada|priv|carretera|carr|calz|calzada|circuito)\b\.?\s*"
 
@@ -44,7 +44,7 @@ def descarga_calles():
     if CACHE.exists():
         return json.loads(CACHE.read_text())
     s, w, n, e = BBOX
-    q = f'[out:json][timeout:180];way["highway"]["name"]({s},{w},{n},{e});out geom tags;'
+    q = f'[out:json][timeout:180];way["highway"]["name"]({s},{w},{n},{e});out body geom;'
     datos = urllib.parse.urlencode({"data": q}).encode()
     req = urllib.request.Request(OVERPASS, data=datos, headers={"User-Agent": "buses-ensenada/0.1"})
     with urllib.request.urlopen(req, timeout=240) as r:
@@ -69,41 +69,74 @@ def construye_grafo(osm):
         if w.get("type") != "way" or "geometry" not in w:
             continue
         nom = w["tags"].get("name", "")
-        nn = normaliza(nom)
-        nombres_osm.setdefault(nn, nom)
+        nn = nom  # las aristas guardan el nombre OSM exacto
+        nombres_osm.setdefault(normaliza(nom), set()).add(nom)
         # Sentido único: se registra pero se ignora por ahora (las calles locales
         # de Ensenada suelen estar mal etiquetadas). Se puede activar después.
-        for (n1, g1), (n2, g2) in zip(zip(w["nodes"], w["geometry"]), zip(w["nodes"][1:], w["geometry"][1:])):
-            p1, p2 = (g1["lat"], g1["lon"]), (g2["lat"], g2["lon"])
+        # Los nodos se identifican por coordenada (las esquinas comparten la misma).
+        geom = [(round(g["lat"], 7), round(g["lon"], 7)) for g in w["geometry"]]
+        for p1, p2 in zip(geom, geom[1:]):
+            n1, n2 = p1, p2
             coords[n1], coords[n2] = p1, p2
             d = dist(p1, p2)
             aristas.setdefault(n1, []).append((n2, d, nn))
             aristas.setdefault(n2, []).append((n1, d, nn))
+    # Conexiones virtuales: rampas y enlaces sin nombre no vienen en la descarga,
+    # así que se unen puntos de calles distintas a menos de SALTO metros.
+    SALTO = 15
+    celdas = {}
+    for n, p in coords.items():
+        celdas.setdefault((int(p[0] * 4000), int(p[1] * 4000)), []).append(n)
+    for (ci, cj), lista in celdas.items():
+        vecinos = [m for di in (-1, 0, 1) for dj in (-1, 0, 1) for m in celdas.get((ci + di, cj + dj), [])]
+        for a in lista:
+            for b in vecinos:
+                if a < b:
+                    d = dist(coords[a], coords[b])
+                    if 0 < d <= SALTO and b not in {v for v, _, _ in aristas[a]}:
+                        aristas[a].append((b, d, None))
+                        aristas[b].append((a, d, None))
     return coords, aristas, nombres_osm
 
 
 def resuelve_nombre(calle, nombres_osm):
     """Devuelve el conjunto de nombres OSM normalizados que corresponden a `calle`."""
     objetivo = normaliza(calle)
+    def originales(claves):
+        return {o for k in claves for o in nombres_osm[k]}
     exactos = {n for n in nombres_osm if n == objetivo}
     if exactos:
-        return exactos
+        return originales(exactos)
     # Coincidencia flexible: singular/plural y contención.
     def raiz(x):
         return re.sub(r"(es|s)$", "", x)
     flex = {n for n in nombres_osm if raiz(n) == raiz(objetivo)}
     if flex:
-        return flex
-    return {n for n in nombres_osm if objetivo and (objetivo in n.split() or objetivo in n)}
+        return originales(flex)
+    return originales({n for n in nombres_osm if objetivo and (objetivo in n.split() or objetivo in n)})
 
 
-def traza(captura, coords, aristas, nombres_osm, max_tramo=40):
-    pasos = captura["ida"]
+def traza(captura, coords, aristas, nombres_osm, max_tramo=80):
+    # Un paso con "osm": null no existe en OSM: se omite y la calle siguiente
+    # se alcanza con un puente más largo. "osm": "<nombre>" fija el nombre exacto.
+    pasos, puentes, extra = [], [], 0
+    for p in captura["ida"]:
+        if "osm" in p and p["osm"] is None:
+            extra = 800
+            continue
+        pasos.append(p)
+        puentes.append(max(max_tramo, extra))
+        extra = 0
     conjuntos = []
     for p in pasos:
-        c = resuelve_nombre(p["calle"], nombres_osm)
+        if p.get("osm"):
+            lista = p["osm"] if isinstance(p["osm"], list) else [p["osm"]]
+            todos = {o for v in nombres_osm.values() for o in v}
+            c = set(lista) & todos
+        else:
+            c = resuelve_nombre(p["calle"], nombres_osm)
         conjuntos.append(c)
-        estado = ", ".join(sorted(nombres_osm[x] for x in c)) or "NO ENCONTRADA"
+        estado = ", ".join(sorted(c)) or "NO ENCONTRADA"
         print(f"  {p['calle']:<28} -> {estado}")
     if not all(conjuntos):
         raise SystemExit("Hay calles sin coincidencia en OpenStreetMap; revisa los nombres.")
@@ -136,7 +169,7 @@ def traza(captura, coords, aristas, nombres_osm, max_tramo=40):
                     continue
                 if nm in conjuntos[j]:
                     nuevo = (v, j, 0.0)
-                elif j == i and puente + w <= max_tramo:
+                elif j == i and puente + w <= (puentes[i + 1] if i < ultimo else max_tramo):
                     nuevo = (v, i, round(puente + w, 1))
                 else:
                     continue
@@ -156,6 +189,18 @@ def traza(captura, coords, aristas, nombres_osm, max_tramo=40):
         k = previo[k]
     camino.append(k[0])
     camino.reverse()
+    # Resumen del recorrido: calles consecutivas con su longitud.
+    tramos = []
+    for a, b in zip(camino, camino[1:]):
+        w, nm = min(((w, nm) for v, w, nm in aristas[a] if v == b), key=lambda x: x[0])
+        nom = nm or "(conexión sin nombre)"
+        if tramos and tramos[-1][0] == nom:
+            tramos[-1][1] += w
+        else:
+            tramos.append([nom, w])
+    print("Recorrido trazado:")
+    for nom, w in tramos:
+        print(f"  {w:7.0f} m  {nom}")
     return [coords[n] for n in camino], mejor[final]
 
 
