@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Buses Ensenada</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<style>
+  html, body { margin: 0; height: 100%; font-family: system-ui, sans-serif; }
+  #mapa { position: absolute; inset: 0; }
+  .panel {
+    position: absolute; top: 10px; right: 10px; z-index: 1000;
+    background: #fff; padding: 10px 12px; border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0,0,0,.25); max-width: 260px; font-size: 14px;
+  }
+  .panel h1 { font-size: 16px; margin: 0 0 6px; }
+  .est { display: flex; align-items: center; gap: 6px; margin: 4px 0; }
+  .dot { width: 12px; height: 12px; border-radius: 50%; flex: none; }
+  .est small { color: #666; }
+  .rutas { margin: 2px 0 6px 18px; padding: 0; color: #333; }
+</style>
+</head>
+<body>
+<div id="mapa"></div>
+<div class="panel" id="panel"><h1>Buses Ensenada</h1><div id="lista">Cargando…</div></div>
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+const mapa = L.map('mapa').setView([31.8667, -116.6200], 14);
+L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  maxZoom: 19,
+  attribution: '&copy; colaboradores de OpenStreetMap'
+}).addTo(mapa);
+
+const limites = L.latLngBounds([]);
+
+fetch('datos/estaciones.json')
+  .then(r => r.json())
+  .then(({ estaciones }) => {
+    const lista = document.getElementById('lista');
+    lista.innerHTML = '';
+    for (const e of estaciones) {
+      const div = document.createElement('div');
+      const pendiente = e.prioridad ? '' : ' <small>(después)</small>';
+      div.innerHTML = `<div class="est"><span class="dot" style="background:${e.color}"></span>
+        <b>${e.nombre}</b>${pendiente}</div>` +
+        (e.rutas.length ? `<ul class="rutas">${e.rutas.map(r => `<li>${r.nombre}</li>`).join('')}</ul>` : '');
+      lista.appendChild(div);
+
+      const c = e.terminal && e.terminal.coordenadas;
+      if (c) {
+        L.circleMarker(c, { radius: 9, color: '#000', weight: 1, fillColor: e.color, fillOpacity: .9 })
+          .addTo(mapa)
+          .bindPopup(`<b>${e.nombre}</b><br>${e.terminal.descripcion}`);
+      }
+      for (const r of e.rutas) {
+        fetch(`datos/rutas/${r.id}.geojson`).then(x => x.ok ? x.json() : null).then(g => {
+          if (!g) return;
+          const ida = { ...g, features: g.features.filter(f => (f.properties || {}).sentido !== 'regreso') };
+          const capa = L.geoJSON(ida, { style: { color: e.color, weight: 5, opacity: .85 } })
+            .addTo(mapa)
+            .bindPopup(f => `<b>${r.nombre}</b><br>${f.feature.properties.km ? f.feature.properties.km + ' km de ida' : ''}`);
+          limites.extend(capa.getBounds());
+          mapa.fitBounds(limites, { padding: [30, 30] });
+        }).catch(() => {});
+      }
+    }
+  });
+</script>
+</body>
+</html>
