@@ -10,9 +10,7 @@ trazan sobre OpenStreetMap.
 - **Enfoque actual: Rojo y Azul.** Amarillo y Naranja quedan para después.
 - **Rojo**: el usuario los usa más. Parada en Calle Sexta: `31.868357, -116.624647`.
 - **Azul**: solo 3 rutas, extensas, todas salen del centro:
-  1. Ruta 1: El Sauzal
-  2. Ruta 2: Maneadero
-  3. Ruta 3: Valle de Guadalupe
+  El Sauzal, Maneadero y Valle de Guadalupe (se nombran solo por destino, sin "Ruta X:").
 - **Transportes El Vigía = terminal Azul**: Calle Sexta 566, Zona Centro, 22800.
   Coordenada: `31.867472, -116.623460`.
 - Rojo y Azul tienen **salidas separadas** y sus rutas **no comparten destino**

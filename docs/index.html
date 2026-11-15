@@ -6,23 +6,56 @@
 <title>Buses Ensenada</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <style>
-  html, body { margin: 0; height: 100%; font-family: system-ui, sans-serif; }
+  html, body { margin: 0; height: 100%; font-family: system-ui, sans-serif; background: #f2efe9; }
   #mapa { position: absolute; inset: 0; }
   .panel {
     position: absolute; top: 10px; right: 10px; z-index: 1000;
     background: #fff; padding: 10px 12px; border-radius: 8px;
-    box-shadow: 0 2px 8px rgba(0,0,0,.25); max-width: 260px; font-size: 14px;
+    box-shadow: 0 2px 8px rgba(0,0,0,.25); width: 270px; max-width: calc(100vw - 76px);
+    max-height: calc(100vh - 40px); overflow-y: auto; font-size: 14px; box-sizing: border-box;
   }
-  .panel h1 { font-size: 16px; margin: 0 0 6px; }
-  .est { display: flex; align-items: center; gap: 6px; margin: 4px 0; }
+  .panel h1 { font-size: 16px; margin: 0; }
+  .plegar {
+    all: unset; cursor: pointer; display: flex; justify-content: space-between; align-items: center;
+    width: 100%; gap: 8px;
+  }
+  .plegar::after { content: "▾"; font-size: 14px; color: #555; }
+  .panel.cerrado .plegar::after { content: "▸"; }
+  .panel.cerrado #contenido { display: none; }
+  .panel.cerrado { width: auto; }
+  #contenido { margin-top: 6px; }
+  .est { display: flex; align-items: center; gap: 6px; margin: 8px 0 4px; }
   .dot { width: 12px; height: 12px; border-radius: 50%; flex: none; }
   .est small { color: #666; }
-  .rutas { margin: 2px 0 6px 18px; padding: 0; color: #333; }
+  .rutas { list-style: none; margin: 0 0 4px 18px; padding: 0; color: #333; }
+  .rutas li { margin: 3px 0 6px; }
+  .rutas li.sin-trazo { color: #888; }
+  .rutas li.sin-trazo::after { content: " (sin trazar)"; font-size: 12px; }
+  .sentidos { display: inline-flex; margin-top: 3px; border: 1px solid #bbb; border-radius: 6px; overflow: hidden; }
+  .sentidos button {
+    font: inherit; font-size: 12px; padding: 3px 8px; border: 0; background: #fff; cursor: pointer;
+    border-left: 1px solid #bbb; color: #333;
+  }
+  .sentidos button:first-child { border-left: 0; }
+  .sentidos button[aria-pressed="true"] { background: var(--c); color: #fff; font-weight: 600; }
+  .clave { font-size: 12px; color: #555; margin-top: 8px; border-top: 1px solid #eee; padding-top: 6px; }
+  .clave span { display: inline-block; width: 26px; vertical-align: middle; margin-right: 4px; }
+  .flecha { pointer-events: none; }
 </style>
 </head>
 <body>
 <div id="mapa"></div>
-<div class="panel" id="panel"><h1>Buses Ensenada</h1><div id="lista">Cargando…</div></div>
+<div class="panel" id="panel">
+  <button class="plegar" type="button" aria-expanded="true" aria-controls="contenido"><h1>Buses Ensenada</h1></button>
+  <div id="contenido">
+  <div id="lista">Cargando…</div>
+  <div class="clave">
+    <div><span><svg width="26" height="8"><line x1="0" y1="4" x2="26" y2="4" stroke="#555" stroke-width="4"/></svg></span>Ida (sale de la terminal)</div>
+    <div><span><svg width="26" height="8"><line x1="0" y1="4" x2="26" y2="4" stroke="#555" stroke-width="4" stroke-dasharray="6 4"/></svg></span>Regreso (hacia la terminal)</div>
+    <div>Las flechas indican el sentido del camión.</div>
+  </div>
+  </div>
+</div>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
 const mapa = L.map('mapa').setView([31.8667, -116.6200], 14);
@@ -31,7 +64,106 @@ L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
   attribution: '&copy; colaboradores de OpenStreetMap'
 }).addTo(mapa);
 
+const panel = document.getElementById('panel');
+const plegar = panel.querySelector('.plegar');
+function ponerPanel(abierto) {
+  panel.classList.toggle('cerrado', !abierto);
+  plegar.setAttribute('aria-expanded', String(abierto));
+}
+plegar.addEventListener('click', () => ponerPanel(panel.classList.contains('cerrado')));
+if (window.innerWidth < 600) ponerPanel(false);
+
 const limites = L.latLngBounds([]);
+const ESTILO = {
+  ida:     { weight: 6, opacity: .9 },
+  regreso: { weight: 4, opacity: .9, dashArray: '10 8' },
+};
+const ETIQUETA = { ida: 'Ida', regreso: 'Regreso', ambos: 'Ambos' };
+
+// Flechas de sentido: un triángulo cada ~90 px de pantalla, recalculadas al hacer zoom.
+function flechas(latlngs, color, grupo) {
+  grupo.clearLayers();
+  const z = mapa.getZoom();
+  const pts = latlngs.map(ll => mapa.project(ll, z));
+  const PASO = 90;
+  let resto = PASO / 2;
+  for (let i = 1; i < pts.length; i++) {
+    const a = pts[i - 1], b = pts[i];
+    const seg = a.distanceTo(b);
+    if (seg === 0) continue;
+    const ang = Math.atan2(b.y - a.y, b.x - a.x) * 180 / Math.PI;
+    while (resto <= seg) {
+      const t = resto / seg;
+      const p = L.point(a.x + (b.x - a.x) * t, a.y + (b.y - a.y) * t);
+      const icono = L.divIcon({
+        className: 'flecha', iconSize: [14, 14], iconAnchor: [7, 7],
+        html: `<svg width="14" height="14" viewBox="0 0 14 14" style="transform:rotate(${ang}deg)">
+                 <path d="M2 2 L12 7 L2 12 L5 7 Z" fill="${color}" stroke="#fff" stroke-width="1.2"/></svg>`,
+      });
+      L.marker(mapa.unproject(p, z), { icon: icono, interactive: false, keyboard: false }).addTo(grupo);
+      resto += PASO;
+    }
+    resto -= seg;
+  }
+}
+
+function crearRuta(r, e, g, li) {
+  const props = (g.features[0] || {}).properties || {};
+  const km = props.km;
+  const capas = {};
+  for (const sentido of ['ida', 'regreso']) {
+    const f = g.features.find(x => (x.properties || {}).sentido === sentido);
+    if (!f) continue;
+    const latlngs = f.geometry.coordinates.map(([lon, lat]) => [lat, lon]);
+    const linea = L.polyline(latlngs, { color: e.color, ...ESTILO[sentido] })
+      .bindPopup(`<b>${r.nombre}</b><br>${ETIQUETA[sentido]}${km ? ` · ${km} km` : ''}` +
+                 (sentido === 'regreso' && f.properties.nota ? `<br><small>${f.properties.nota}</small>` : ''));
+    const grupoFlechas = L.layerGroup();
+    capas[sentido] = { linea, grupoFlechas, latlngs, grupo: L.layerGroup([linea, grupoFlechas]) };
+    limites.extend(linea.getBounds());
+  }
+
+  let actual = null;
+  function mostrar(modo) {
+    actual = modo;
+    for (const [sentido, c] of Object.entries(capas)) {
+      const visible = modo === 'ambos' || modo === sentido;
+      if (visible) {
+        c.grupo.addTo(mapa);
+        flechas(c.latlngs, e.color, c.grupoFlechas);
+      } else {
+        c.grupo.remove();
+      }
+    }
+    // En "ambos", la ida va debajo para que el regreso punteado se vea encima.
+    if (modo === 'ambos' && capas.regreso) capas.regreso.linea.bringToFront();
+    li.querySelectorAll('.sentidos button').forEach(b =>
+      b.setAttribute('aria-pressed', String(b.dataset.modo === modo)));
+  }
+  mapa.on('zoomend', () => {
+    for (const [sentido, c] of Object.entries(capas)) {
+      if (actual === 'ambos' || actual === sentido) flechas(c.latlngs, e.color, c.grupoFlechas);
+    }
+  });
+
+  const botones = document.createElement('div');
+  botones.className = 'sentidos';
+  botones.style.setProperty('--c', e.color);
+  for (const modo of ['ida', 'regreso', 'ambos']) {
+    if (modo !== 'ambos' && !capas[modo]) continue;
+    if (modo === 'ambos' && !(capas.ida && capas.regreso)) continue;
+    const b = document.createElement('button');
+    b.type = 'button';
+    b.dataset.modo = modo;
+    b.textContent = ETIQUETA[modo];
+    b.addEventListener('click', () => mostrar(modo));
+    botones.appendChild(b);
+  }
+  li.appendChild(document.createElement('br'));
+  li.appendChild(botones);
+  mostrar(capas.ida ? 'ida' : 'regreso');
+  mapa.fitBounds(limites, { padding: [30, 30] });
+}
 
 fetch('datos/estaciones.json')
   .then(r => r.json())
@@ -42,8 +174,23 @@ fetch('datos/estaciones.json')
       const div = document.createElement('div');
       const pendiente = e.prioridad ? '' : ' <small>(después)</small>';
       div.innerHTML = `<div class="est"><span class="dot" style="background:${e.color}"></span>
-        <b>${e.nombre}</b>${pendiente}</div>` +
-        (e.rutas.length ? `<ul class="rutas">${e.rutas.map(r => `<li>${r.nombre}</li>`).join('')}</ul>` : '');
+        <b>${e.nombre}</b>${pendiente}</div>`;
+      if (e.rutas.length) {
+        const ul = document.createElement('ul');
+        ul.className = 'rutas';
+        for (const r of e.rutas) {
+          const li = document.createElement('li');
+          li.className = 'sin-trazo';
+          li.textContent = r.nombre;
+          ul.appendChild(li);
+          fetch(`datos/rutas/${r.id}.geojson`).then(x => x.ok ? x.json() : null).then(g => {
+            if (!g) return;
+            li.className = '';
+            crearRuta(r, e, g, li);
+          }).catch(() => {});
+        }
+        div.appendChild(ul);
+      }
       lista.appendChild(div);
 
       const c = e.terminal && e.terminal.coordenadas;
@@ -51,17 +198,6 @@ fetch('datos/estaciones.json')
         L.circleMarker(c, { radius: 9, color: '#000', weight: 1, fillColor: e.color, fillOpacity: .9 })
           .addTo(mapa)
           .bindPopup(`<b>${e.nombre}</b><br>${e.terminal.descripcion}`);
-      }
-      for (const r of e.rutas) {
-        fetch(`datos/rutas/${r.id}.geojson`).then(x => x.ok ? x.json() : null).then(g => {
-          if (!g) return;
-          const ida = { ...g, features: g.features.filter(f => (f.properties || {}).sentido !== 'regreso') };
-          const capa = L.geoJSON(ida, { style: { color: e.color, weight: 5, opacity: .85 } })
-            .addTo(mapa)
-            .bindPopup(f => `<b>${r.nombre}</b><br>${f.feature.properties.km ? f.feature.properties.km + ' km de ida' : ''}`);
-          limites.extend(capa.getBounds());
-          mapa.fitBounds(limites, { padding: [30, 30] });
-        }).catch(() => {});
       }
     }
   });
