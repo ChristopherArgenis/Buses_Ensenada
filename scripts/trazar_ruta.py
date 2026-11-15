@@ -22,8 +22,8 @@ from pathlib import Path
 
 RAIZ = Path(__file__).resolve().parent.parent
 CACHE = RAIZ / "osm" / "calles_ensenada.json"
-# Caja que cubre la mancha urbana de Ensenada (sur, oeste, norte, este).
-BBOX = (31.78, -116.70, 31.95, -116.52)
+# Caja que cubre Ensenada, El Sauzal, Maneadero y Valle de Guadalupe (sur, oeste, norte, este).
+BBOX = (31.66, -116.78, 32.13, -116.40)
 OVERPASS = "https://overpass.kumi.systems/api/interpreter"
 
 PREFIJOS = r"^(calle|c|av|avenida|blvd|boulevard|bulevar|privada|priv|carretera|carr|calz|calzada|circuito)\b\.?\s*"

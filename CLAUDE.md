@@ -27,10 +27,11 @@ trazan sobre OpenStreetMap.
 - `scripts/trazar_ruta.py <captura>` → genera el GeoJSON e imprime el recorrido calle por calle.
 
 ## Rutas
-- **Rojo / Ampliación Indeco**: trazada, 11.03 km de ida; regresa por las mismas calles.
+- **Rojo / Ampliación Indeco**: trazada y **verificada por el usuario**, 11.03 km de ida;
+  regresa por las mismas calles.
   Equivalencias en OSM: Castañedo → Calle Castaño; "Alhelí" (bajando desde Nogales) → Calle
   de los Alhelíes; "Av. Alhelíes" (de Castaño a Pino) → Calle Alhelíes. "Albatros" no existe
-  en OSM: el trazo usa Flamingo entre Blvd. Kumiai y Cisne (por confirmar).
+  en OSM: el tramo entre Blvd. Kumiai y Cisne es Flamingo (confirmado).
 
 ## Reglas
 - No inventar coordenadas ni calles: lo no confirmado va como `null` o "por confirmar".
