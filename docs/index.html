@@ -31,15 +31,8 @@
   .rutas li { margin: 3px 0 6px; }
   .rutas li.sin-trazo { color: #888; }
   .rutas li.sin-trazo::after { content: " (sin trazar)"; font-size: 12px; }
-  .sentidos { display: inline-flex; margin-top: 3px; border: 1px solid #bbb; border-radius: 6px; overflow: hidden; }
-  .sentidos button {
-    font: inherit; font-size: 12px; padding: 3px 8px; border: 0; background: #fff; cursor: pointer;
-    border-left: 1px solid #bbb; color: #333;
-  }
-  .sentidos button:first-child { border-left: 0; }
-  .sentidos button[aria-pressed="true"] { background: var(--c); color: #fff; font-weight: 600; }
   .clave { font-size: 12px; color: #555; margin-top: 8px; border-top: 1px solid #eee; padding-top: 6px; }
-  .clave span { display: inline-block; width: 26px; vertical-align: middle; margin-right: 4px; }
+  .rutas small { color: #666; font-size: 12px; }
   .flecha { pointer-events: none; }
 </style>
 </head>
@@ -50,9 +43,7 @@
   <div id="contenido">
   <div id="lista">Cargando…</div>
   <div class="clave">
-    <div><span><svg width="26" height="8"><line x1="0" y1="4" x2="26" y2="4" stroke="#555" stroke-width="4"/></svg></span>Ida (sale de la terminal)</div>
-    <div><span><svg width="26" height="8"><line x1="0" y1="4" x2="26" y2="4" stroke="#555" stroke-width="4" stroke-dasharray="6 4"/></svg></span>Regreso (hacia la terminal)</div>
-    <div>Las flechas indican el sentido del camión.</div>
+    <div>➤ Las flechas indican el sentido del camión.</div>
   </div>
   </div>
 </div>
@@ -74,11 +65,7 @@ plegar.addEventListener('click', () => ponerPanel(panel.classList.contains('cerr
 if (window.innerWidth < 600) ponerPanel(false);
 
 const limites = L.latLngBounds([]);
-const ESTILO = {
-  ida:     { weight: 6, opacity: .9 },
-  regreso: { weight: 4, opacity: .9, dashArray: '10 8' },
-};
-const ETIQUETA = { ida: 'Ida', regreso: 'Regreso', ambos: 'Ambos' };
+const ESTILO = { weight: 6, opacity: .9 };
 
 // Flechas de sentido: un triángulo cada ~90 px de pantalla, recalculadas al hacer zoom.
 function flechas(latlngs, color, grupo) {
@@ -107,61 +94,42 @@ function flechas(latlngs, color, grupo) {
   }
 }
 
+// Una línea con flechas por sentido. Si el regreso es el mismo camino que la ida
+// en reversa, solo se dibuja la ida (y el detalle lo indica) para no encimar líneas.
+function mismoCamino(a, b) {
+  if (!a || !b || a.length !== b.length) return false;
+  const r = [...b].reverse();
+  return a.every((p, i) => p[0] === r[i][0] && p[1] === r[i][1]);
+}
+
 function crearRuta(r, e, g, li) {
-  const props = (g.features[0] || {}).properties || {};
-  const km = props.km;
-  const capas = {};
-  for (const sentido of ['ida', 'regreso']) {
-    const f = g.features.find(x => (x.properties || {}).sentido === sentido);
-    if (!f) continue;
-    const latlngs = f.geometry.coordinates.map(([lon, lat]) => [lat, lon]);
-    const linea = L.polyline(latlngs, { color: e.color, ...ESTILO[sentido] })
-      .bindPopup(`<b>${r.nombre}</b><br>${ETIQUETA[sentido]}${km ? ` · ${km} km` : ''}` +
-                 (sentido === 'regreso' && f.properties.nota ? `<br><small>${f.properties.nota}</small>` : ''));
+  const buscar = s => g.features.find(x => (x.properties || {}).sentido === s);
+  const ida = buscar('ida'), reg = buscar('regreso');
+  const km = ida && ida.properties.km;
+  const aLatLng = f => f.geometry.coordinates.map(([lon, lat]) => [lat, lon]);
+  const mismo = ida && reg && mismoCamino(ida.geometry.coordinates, reg.geometry.coordinates);
+  const tramos = [];
+  if (ida) tramos.push({ f: ida, texto: mismo ? 'Ida y regreso por las mismas calles' : 'Ida' });
+  if (reg && !mismo) tramos.push({ f: reg, texto: 'Regreso' });
+
+  const capas = tramos.map(({ f, texto }) => {
+    const latlngs = aLatLng(f);
+    const linea = L.polyline(latlngs, { color: e.color, ...ESTILO })
+      .bindPopup(`<b>${r.nombre}</b><br>${texto}${km ? ` · ${km} km de ida` : ''}`);
     const grupoFlechas = L.layerGroup();
-    capas[sentido] = { linea, grupoFlechas, latlngs, grupo: L.layerGroup([linea, grupoFlechas]) };
+    L.layerGroup([linea, grupoFlechas]).addTo(mapa);
     limites.extend(linea.getBounds());
-  }
-
-  let actual = null;
-  function mostrar(modo) {
-    actual = modo;
-    for (const [sentido, c] of Object.entries(capas)) {
-      const visible = modo === 'ambos' || modo === sentido;
-      if (visible) {
-        c.grupo.addTo(mapa);
-        flechas(c.latlngs, e.color, c.grupoFlechas);
-      } else {
-        c.grupo.remove();
-      }
-    }
-    // En "ambos", la ida va debajo para que el regreso punteado se vea encima.
-    if (modo === 'ambos' && capas.regreso) capas.regreso.linea.bringToFront();
-    li.querySelectorAll('.sentidos button').forEach(b =>
-      b.setAttribute('aria-pressed', String(b.dataset.modo === modo)));
-  }
-  mapa.on('zoomend', () => {
-    for (const [sentido, c] of Object.entries(capas)) {
-      if (actual === 'ambos' || actual === sentido) flechas(c.latlngs, e.color, c.grupoFlechas);
-    }
+    return { latlngs, grupoFlechas };
   });
+  const dibujarFlechas = () => capas.forEach(c => flechas(c.latlngs, e.color, c.grupoFlechas));
+  dibujarFlechas();
+  mapa.on('zoomend', dibujarFlechas);
 
-  const botones = document.createElement('div');
-  botones.className = 'sentidos';
-  botones.style.setProperty('--c', e.color);
-  for (const modo of ['ida', 'regreso', 'ambos']) {
-    if (modo !== 'ambos' && !capas[modo]) continue;
-    if (modo === 'ambos' && !(capas.ida && capas.regreso)) continue;
-    const b = document.createElement('button');
-    b.type = 'button';
-    b.dataset.modo = modo;
-    b.textContent = ETIQUETA[modo];
-    b.addEventListener('click', () => mostrar(modo));
-    botones.appendChild(b);
+  if (mismo) {
+    const nota = document.createElement('small');
+    nota.textContent = ' · regresa por las mismas calles';
+    li.appendChild(nota);
   }
-  li.appendChild(document.createElement('br'));
-  li.appendChild(botones);
-  mostrar(capas.ida ? 'ida' : 'regreso');
   mapa.fitBounds(limites, { padding: [30, 30] });
 }
 
