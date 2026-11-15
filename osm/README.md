@@ -6,3 +6,6 @@ Se descarga abriendo en el navegador:
 https://overpass-api.de/api/interpreter?data=%5Bout%3Ajson%5D%5Btimeout%3A180%5D%3Bway%5B%22highway%22%5D%5B%22name%22%5D%2831.66%2C-116.78%2C32.13%2C-116.40%29%3Bout%20geom%20tags%3B
 
 Datos © colaboradores de OpenStreetMap, licencia ODbL.
+
+Complementos: cualquier otro `osm/*.json` con el mismo formato se suma al cargar las calles.
+- `sin_nombre_sauzal.json`: rampas, retornos y enlaces sin nombre del entronque El Sauzal – Tecate.

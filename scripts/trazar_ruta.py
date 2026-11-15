@@ -42,9 +42,22 @@ def normaliza(nombre):
     return s
 
 
+ENLACE = "(enlace sin nombre)"
+
+
 def descarga_calles():
     if CACHE.exists():
-        return json.loads(CACHE.read_text())
+        osm = json.loads(CACHE.read_text())
+        # Complementos: otros osm/*.json (p. ej. rampas y retornos sin nombre de una zona).
+        vistos = {w["id"] for w in osm["elements"]}
+        for extra in sorted(CACHE.parent.glob("*.json")):
+            if extra == CACHE:
+                continue
+            for w in json.loads(extra.read_text())["elements"]:
+                if w["id"] not in vistos:
+                    osm["elements"].append(w)
+                    vistos.add(w["id"])
+        return osm
     s, w, n, e = BBOX
     q = f'[out:json][timeout:180];way["highway"]["name"]({s},{w},{n},{e});out body geom;'
     datos = urllib.parse.urlencode({"data": q}).encode()
@@ -72,6 +85,10 @@ def construye_grafo(osm):
             continue
         nom = w["tags"].get("name", "")
         nn = nom  # las aristas guardan el nombre OSM exacto
+        if not nom:
+            # Tramo sin nombre: los enlaces (rampas, retornos) se pueden recorrer
+            # libremente como puente; el resto, como calle sin nombre.
+            nn = ENLACE if w["tags"].get("highway", "").endswith("_link") else ""
         nombres_osm.setdefault(normaliza(nom), set()).add(nom)
         # Sentido único: solo se respeta en carreteras y vías principales, donde
         # OSM separa cada carril (ej. Calle Primera en El Sauzal). En calles
@@ -205,11 +222,15 @@ def traza(lista, origen, coords, aristas, nombres_osm, fin=None, max_tramo=80):
                     continue
                 if nm in conjuntos[j]:
                     nuevo = (v, j, 0.0)
+                elif j == i and nm == ENLACE:
+                    nuevo = (v, i, puente)  # los enlaces sin nombre no gastan puente
                 elif j == i and puente + w <= (puentes[i + 1] if i < ultimo else max_tramo):
                     nuevo = (v, i, round(puente + w, 1))
                 else:
                     continue
-                nd = d + w
+                # Las conexiones virtuales (nm None) cuestan más: solo se usan si no
+                # hay un camino real.
+                nd = d + (w * 4 if nm is None else w)
                 if nd < mejor.get(nuevo, INF):
                     mejor[nuevo] = nd
                     previo[nuevo] = (u, i, puente)
@@ -229,7 +250,7 @@ def traza(lista, origen, coords, aristas, nombres_osm, fin=None, max_tramo=80):
     tramos = []
     for a, b in zip(camino, camino[1:]):
         w, nm = min(((w, nm) for v, w, nm in aristas[a] if v == b), key=lambda x: x[0])
-        nom = nm or "(conexión sin nombre)"
+        nom = nm or ("(conexión virtual)" if nm is None else "(calle sin nombre)")
         if tramos and tramos[-1][0] == nom:
             tramos[-1][1] += w
         else:
@@ -237,7 +258,8 @@ def traza(lista, origen, coords, aristas, nombres_osm, fin=None, max_tramo=80):
     print("Recorrido trazado:")
     for nom, w in tramos:
         print(f"  {w:7.0f} m  {nom}")
-    return camino, mejor[final]
+    metros = sum(dist(coords[a], coords[b]) for a, b in zip(camino, camino[1:]))
+    return camino, metros
 
 
 def main():
