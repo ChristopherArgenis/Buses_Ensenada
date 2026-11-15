@@ -32,7 +32,6 @@
   .rutas li.sin-trazo { color: #888; }
   .rutas li.sin-trazo::after { content: " (sin trazar)"; font-size: 12px; }
   .clave { font-size: 12px; color: #555; margin-top: 8px; border-top: 1px solid #eee; padding-top: 6px; }
-  .rutas small { color: #666; font-size: 12px; }
   .flecha { pointer-events: none; }
 </style>
 </head>
@@ -95,7 +94,7 @@ function flechas(latlngs, color, grupo) {
 }
 
 // Una línea con flechas por sentido. Si el regreso es el mismo camino que la ida
-// en reversa, solo se dibuja la ida (y el detalle lo indica) para no encimar líneas.
+// en reversa, solo se dibuja la ida para no encimar líneas.
 function mismoCamino(a, b) {
   if (!a || !b || a.length !== b.length) return false;
   const r = [...b].reverse();
@@ -125,11 +124,6 @@ function crearRuta(r, e, g, li) {
   dibujarFlechas();
   mapa.on('zoomend', dibujarFlechas);
 
-  if (mismo) {
-    const nota = document.createElement('small');
-    nota.textContent = ' · regresa por las mismas calles';
-    li.appendChild(nota);
-  }
   mapa.fitBounds(limites, { padding: [30, 30] });
 }
 

@@ -33,6 +33,20 @@ trazan sobre OpenStreetMap.
   de los Alhelíes; "Av. Alhelíes" (de Castaño a Pino) → Calle Alhelíes. "Albatros" no existe
   en OSM: el tramo entre Blvd. Kumiai y Cisne es Flamingo (confirmado).
 
+- **Azul / El Sauzal**: trazada (11.04 km ida, 10.54 km regreso), por verificar con el usuario.
+  Centro: Sexta → Gastélum → Novena → 20 de Noviembre → Décima → Clark Flores → Carretera
+  Tijuana–Ensenada (Libre) → Calle Primera (en El Sauzal es la carretera federal, de dos carriles
+  separados) → retorno en la Carretera Tecate–El Sauzal → Calle Diez → Calle Tres (ahí espera)
+  → Calle Nueve → Calle Primera, y regresa por las mismas calles por el carril de vuelta.
+  "Calle 3" en OSM es "Calle Tres".
+
+## Trazado (scripts/trazar_ruta.py)
+- Respeta sentido único solo en vías motorway/trunk/primary (y sus enlaces); en calles locales lo ignora.
+- La descarga solo trae calles con nombre; los huecos se cubren con conexiones virtuales
+  (15 m en general, 30 m si un extremo es punta suelta).
+- Captura: `ida` (pasos), `regreso_pasos` opcional (si no, el regreso es la ida en reversa),
+  `fin_ida` opcional ([lat, lon]).
+
 ## Reglas
 - No inventar coordenadas ni calles: lo no confirmado va como `null` o "por confirmar".
 - Coordenadas en JSON del catálogo: `[lat, lon]`. En GeoJSON: `[lon, lat]` (estándar).
