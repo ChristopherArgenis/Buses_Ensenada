@@ -6,23 +6,46 @@
 <title>Buses Ensenada</title>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
 <style>
-  html, body { margin: 0; height: 100%; font-family: system-ui, sans-serif; }
+  html, body { margin: 0; height: 100%; font-family: system-ui, sans-serif; background: #f2efe9; }
   #mapa { position: absolute; inset: 0; }
   .panel {
     position: absolute; top: 10px; right: 10px; z-index: 1000;
     background: #fff; padding: 10px 12px; border-radius: 8px;
-    box-shadow: 0 2px 8px rgba(0,0,0,.25); max-width: 260px; font-size: 14px;
+    box-shadow: 0 2px 8px rgba(0,0,0,.25); width: 270px; max-width: calc(100vw - 76px);
+    max-height: calc(100vh - 40px); overflow-y: auto; font-size: 14px; box-sizing: border-box;
   }
-  .panel h1 { font-size: 16px; margin: 0 0 6px; }
-  .est { display: flex; align-items: center; gap: 6px; margin: 4px 0; }
+  .panel h1 { font-size: 16px; margin: 0; }
+  .plegar {
+    all: unset; cursor: pointer; display: flex; justify-content: space-between; align-items: center;
+    width: 100%; gap: 8px;
+  }
+  .plegar::after { content: "▾"; font-size: 14px; color: #555; }
+  .panel.cerrado .plegar::after { content: "▸"; }
+  .panel.cerrado #contenido { display: none; }
+  .panel.cerrado { width: auto; }
+  #contenido { margin-top: 6px; }
+  .est { display: flex; align-items: center; gap: 6px; margin: 8px 0 4px; }
   .dot { width: 12px; height: 12px; border-radius: 50%; flex: none; }
   .est small { color: #666; }
-  .rutas { margin: 2px 0 6px 18px; padding: 0; color: #333; }
+  .rutas { list-style: none; margin: 0 0 4px 18px; padding: 0; color: #333; }
+  .rutas li { margin: 3px 0 6px; }
+  .rutas li.sin-trazo { color: #888; }
+  .rutas li.sin-trazo::after { content: " (sin trazar)"; font-size: 12px; }
+  .clave { font-size: 12px; color: #555; margin-top: 8px; border-top: 1px solid #eee; padding-top: 6px; }
+  .flecha { pointer-events: none; }
 </style>
 </head>
 <body>
 <div id="mapa"></div>
-<div class="panel" id="panel"><h1>Buses Ensenada</h1><div id="lista">Cargando…</div></div>
+<div class="panel" id="panel">
+  <button class="plegar" type="button" aria-expanded="true" aria-controls="contenido"><h1>Buses Ensenada</h1></button>
+  <div id="contenido">
+  <div id="lista">Cargando…</div>
+  <div class="clave">
+    <div>➤ Las flechas indican el sentido del camión.</div>
+  </div>
+  </div>
+</div>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
 const mapa = L.map('mapa').setView([31.8667, -116.6200], 14);
@@ -31,7 +54,78 @@ L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
   attribution: '&copy; colaboradores de OpenStreetMap'
 }).addTo(mapa);
 
+const panel = document.getElementById('panel');
+const plegar = panel.querySelector('.plegar');
+function ponerPanel(abierto) {
+  panel.classList.toggle('cerrado', !abierto);
+  plegar.setAttribute('aria-expanded', String(abierto));
+}
+plegar.addEventListener('click', () => ponerPanel(panel.classList.contains('cerrado')));
+if (window.innerWidth < 600) ponerPanel(false);
+
 const limites = L.latLngBounds([]);
+const ESTILO = { weight: 6, opacity: .9 };
+
+// Flechas de sentido: un triángulo cada ~90 px de pantalla, recalculadas al hacer zoom.
+function flechas(latlngs, color, grupo) {
+  grupo.clearLayers();
+  const z = mapa.getZoom();
+  const pts = latlngs.map(ll => mapa.project(ll, z));
+  const PASO = 90;
+  let resto = PASO / 2;
+  for (let i = 1; i < pts.length; i++) {
+    const a = pts[i - 1], b = pts[i];
+    const seg = a.distanceTo(b);
+    if (seg === 0) continue;
+    const ang = Math.atan2(b.y - a.y, b.x - a.x) * 180 / Math.PI;
+    while (resto <= seg) {
+      const t = resto / seg;
+      const p = L.point(a.x + (b.x - a.x) * t, a.y + (b.y - a.y) * t);
+      const icono = L.divIcon({
+        className: 'flecha', iconSize: [14, 14], iconAnchor: [7, 7],
+        html: `<svg width="14" height="14" viewBox="0 0 14 14" style="transform:rotate(${ang}deg)">
+                 <path d="M2 2 L12 7 L2 12 L5 7 Z" fill="${color}" stroke="#fff" stroke-width="1.2"/></svg>`,
+      });
+      L.marker(mapa.unproject(p, z), { icon: icono, interactive: false, keyboard: false }).addTo(grupo);
+      resto += PASO;
+    }
+    resto -= seg;
+  }
+}
+
+// Una línea con flechas por sentido. Si el regreso es el mismo camino que la ida
+// en reversa, solo se dibuja la ida para no encimar líneas.
+function mismoCamino(a, b) {
+  if (!a || !b || a.length !== b.length) return false;
+  const r = [...b].reverse();
+  return a.every((p, i) => p[0] === r[i][0] && p[1] === r[i][1]);
+}
+
+function crearRuta(r, e, g, li) {
+  const buscar = s => g.features.find(x => (x.properties || {}).sentido === s);
+  const ida = buscar('ida'), reg = buscar('regreso');
+  const km = ida && ida.properties.km;
+  const aLatLng = f => f.geometry.coordinates.map(([lon, lat]) => [lat, lon]);
+  const mismo = ida && reg && mismoCamino(ida.geometry.coordinates, reg.geometry.coordinates);
+  const tramos = [];
+  if (ida) tramos.push({ f: ida, texto: mismo ? 'Ida y regreso por las mismas calles' : 'Ida' });
+  if (reg && !mismo) tramos.push({ f: reg, texto: 'Regreso' });
+
+  const capas = tramos.map(({ f, texto }) => {
+    const latlngs = aLatLng(f);
+    const linea = L.polyline(latlngs, { color: e.color, ...ESTILO })
+      .bindPopup(`<b>${r.nombre}</b><br>${texto}${km ? ` · ${km} km de ida` : ''}`);
+    const grupoFlechas = L.layerGroup();
+    L.layerGroup([linea, grupoFlechas]).addTo(mapa);
+    limites.extend(linea.getBounds());
+    return { latlngs, grupoFlechas };
+  });
+  const dibujarFlechas = () => capas.forEach(c => flechas(c.latlngs, e.color, c.grupoFlechas));
+  dibujarFlechas();
+  mapa.on('zoomend', dibujarFlechas);
+
+  mapa.fitBounds(limites, { padding: [30, 30] });
+}
 
 fetch('datos/estaciones.json')
   .then(r => r.json())
@@ -42,8 +136,23 @@ fetch('datos/estaciones.json')
       const div = document.createElement('div');
       const pendiente = e.prioridad ? '' : ' <small>(después)</small>';
       div.innerHTML = `<div class="est"><span class="dot" style="background:${e.color}"></span>
-        <b>${e.nombre}</b>${pendiente}</div>` +
-        (e.rutas.length ? `<ul class="rutas">${e.rutas.map(r => `<li>${r.nombre}</li>`).join('')}</ul>` : '');
+        <b>${e.nombre}</b>${pendiente}</div>`;
+      if (e.rutas.length) {
+        const ul = document.createElement('ul');
+        ul.className = 'rutas';
+        for (const r of e.rutas) {
+          const li = document.createElement('li');
+          li.className = 'sin-trazo';
+          li.textContent = r.nombre;
+          ul.appendChild(li);
+          fetch(`datos/rutas/${r.id}.geojson`).then(x => x.ok ? x.json() : null).then(g => {
+            if (!g) return;
+            li.className = '';
+            crearRuta(r, e, g, li);
+          }).catch(() => {});
+        }
+        div.appendChild(ul);
+      }
       lista.appendChild(div);
 
       const c = e.terminal && e.terminal.coordenadas;
@@ -51,17 +160,6 @@ fetch('datos/estaciones.json')
         L.circleMarker(c, { radius: 9, color: '#000', weight: 1, fillColor: e.color, fillOpacity: .9 })
           .addTo(mapa)
           .bindPopup(`<b>${e.nombre}</b><br>${e.terminal.descripcion}`);
-      }
-      for (const r of e.rutas) {
-        fetch(`datos/rutas/${r.id}.geojson`).then(x => x.ok ? x.json() : null).then(g => {
-          if (!g) return;
-          const ida = { ...g, features: g.features.filter(f => (f.properties || {}).sentido !== 'regreso') };
-          const capa = L.geoJSON(ida, { style: { color: e.color, weight: 5, opacity: .85 } })
-            .addTo(mapa)
-            .bindPopup(f => `<b>${r.nombre}</b><br>${f.feature.properties.km ? f.feature.properties.km + ' km de ida' : ''}`);
-          limites.extend(capa.getBounds());
-          mapa.fitBounds(limites, { padding: [30, 30] });
-        }).catch(() => {});
       }
     }
   });

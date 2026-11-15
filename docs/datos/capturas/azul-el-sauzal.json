@@ -1,0 +1,129 @@
+{
+  "id": "azul-el-sauzal",
+  "estacion": "azul",
+  "nombre": "El Sauzal",
+  "fuente": "Usuario (dictada de memoria)",
+  "inicio": {
+    "descripcion": "Terminal Azul, Transportes El Vigía, Calle Sexta 566",
+    "coordenadas": [
+      31.867472,
+      -116.62346
+    ]
+  },
+  "regreso": "Desde la Calle Nueve vuelve a la Calle Primera y regresa por las mismas calles, por el carril de vuelta.",
+  "ida": [
+    {
+      "calle": "Calle Sexta",
+      "accion": "sale de la terminal y da vuelta a la izquierda"
+    },
+    {
+      "calle": "Avenida Gastélum",
+      "accion": "vuelta a la derecha"
+    },
+    {
+      "calle": "Calle Novena",
+      "accion": "vuelta a la izquierda"
+    },
+    {
+      "calle": "Avenida 20 de Noviembre",
+      "accion": "vuelta a la derecha",
+      "osm": "Avenida 20 de Noviembre"
+    },
+    {
+      "calle": "Calle Décima",
+      "accion": "vuelta a la izquierda",
+      "osm": [
+        "Calle Décima",
+        "Décima"
+      ]
+    },
+    {
+      "calle": "Avenida José de Jesús Clark Flores",
+      "accion": "sigue derecho",
+      "osm": [
+        "Avenida José de Jesús Clark Flores",
+        "Avenida José de Jesús de Clark Flores",
+        "Avenida Jesús de Clark Flores"
+      ]
+    },
+    {
+      "calle": "Carretera Tijuana - Ensenada (Libre)",
+      "accion": "entra a la carretera",
+      "osm": [
+        "Carretera Tijuana - Ensenada (Libre)",
+        "Carretera Tijuana-Ensenada"
+      ]
+    },
+    {
+      "calle": "Calle Primera",
+      "accion": "en El Sauzal",
+      "osm": "Calle Primera"
+    },
+    {
+      "calle": "Carretera Tecate - El Sauzal",
+      "accion": "entra a la glorieta",
+      "osm": "Carretera Tecate - El Sauzal"
+    },
+    {
+      "calle": "Calle Diez",
+      "accion": "entra a Calle Diez"
+    },
+    {
+      "calle": "Calle 3",
+      "accion": "se adentra; aquí espera un tiempo",
+      "osm": "Calle Tres",
+      "nota": "En OSM se llama \"Calle Tres\""
+    },
+    {
+      "calle": "Calle Nueve",
+      "accion": "sale por Calle Nueve"
+    },
+    {
+      "calle": "Calle Primera",
+      "accion": "se reincorpora para regresar",
+      "osm": "Calle Primera"
+    }
+  ],
+  "regreso_pasos": [
+    {
+      "calle": "Calle Primera",
+      "osm": "Calle Primera"
+    },
+    {
+      "calle": "Carretera Tijuana - Ensenada (Libre)",
+      "osm": [
+        "Carretera Tijuana - Ensenada (Libre)",
+        "Carretera Tijuana-Ensenada"
+      ]
+    },
+    {
+      "calle": "Avenida José de Jesús Clark Flores",
+      "osm": [
+        "Avenida José de Jesús Clark Flores",
+        "Avenida José de Jesús de Clark Flores",
+        "Avenida Jesús de Clark Flores"
+      ]
+    },
+    {
+      "calle": "Calle Décima",
+      "osm": [
+        "Calle Décima",
+        "Décima"
+      ]
+    },
+    {
+      "calle": "Avenida 20 de Noviembre",
+      "osm": "Avenida 20 de Noviembre"
+    },
+    {
+      "calle": "Calle Novena"
+    },
+    {
+      "calle": "Avenida Gastélum"
+    },
+    {
+      "calle": "Calle Sexta",
+      "accion": "llega a la terminal"
+    }
+  ]
+}

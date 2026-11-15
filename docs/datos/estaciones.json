@@ -20,7 +20,7 @@
           "nombre": "Ampliación Indeco",
           "origen": "Centro (Calle Sexta)",
           "destino": "Ampliación Indeco (C. Cucapah)",
-          "estado": "trazada (11 km de ida); por verificar con el usuario"
+          "estado": "trazada y verificada por el usuario (11 km de ida)"
         }
       ],
       "notas": "El usuario usa principalmente esta estación. Rutas por capturar."
@@ -41,22 +41,22 @@
       },
       "rutas": [
         {
-          "id": "azul-1",
-          "nombre": "Ruta 1: El Sauzal",
-          "origen": "Centro",
-          "destino": "El Sauzal",
-          "estado": "pendiente de trazar"
+          "id": "azul-el-sauzal",
+          "nombre": "El Sauzal",
+          "origen": "Centro (terminal El Vigía)",
+          "destino": "El Sauzal (Calle Tres)",
+          "estado": "trazada; por verificar con el usuario"
         },
         {
-          "id": "azul-2",
-          "nombre": "Ruta 2: Maneadero",
+          "id": "azul-maneadero",
+          "nombre": "Maneadero",
           "origen": "Centro",
           "destino": "Maneadero",
           "estado": "pendiente de trazar"
         },
         {
-          "id": "azul-3",
-          "nombre": "Ruta 3: Valle de Guadalupe",
+          "id": "azul-valle-de-guadalupe",
+          "nombre": "Valle de Guadalupe",
           "origen": "Centro",
           "destino": "Valle de Guadalupe",
           "estado": "pendiente de trazar"

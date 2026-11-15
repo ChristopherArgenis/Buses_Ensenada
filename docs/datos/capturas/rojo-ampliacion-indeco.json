@@ -76,7 +76,7 @@
       "calle": "C. Castañedo",
       "accion": "sube",
       "osm": "Calle Castaño",
-      "nota": "En OSM se llama \"Calle Castaño\" (por confirmar con el usuario)"
+      "nota": "En OSM se llama \"Calle Castaño\" (confirmado por el usuario)"
     },
     {
       "calle": "Av. Alhelíes",
@@ -111,7 +111,7 @@
       "calle": "Albatros",
       "accion": "hacia Albatros",
       "osm": null,
-      "nota": "No existe en OSM con ese nombre; se cruza con un tramo puente entre Blvd. Kumiai y Cisne"
+      "nota": "No existe en OSM con ese nombre; el tramo entre Blvd. Kumiai y Cisne es Flamingo (confirmado por el usuario)"
     },
     {
       "calle": "Cisne",
@@ -138,5 +138,6 @@
       "calle": "C. Cucapah",
       "accion": "vuelta a la izquierda (fin de la ida)"
     }
-  ]
+  ],
+  "verificada": true
 }
