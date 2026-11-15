@@ -1,16 +1,19 @@
 # Buses_Ensenada
 Mapeo de las Rutas de Autobuses de la Cuidad de Ensenada, B.C, México
 
+🗺️ **Ver el mapa:** https://christopherargenis.github.io/Buses_Ensenada/
+
 ## Estaciones
 | Estación | Color | Estado |
 |---|---|---|
-| Roja | 🔴 | En captura (terminal en Calle Sexta) |
-| Azul | 🔵 | 3 rutas: El Sauzal, Maneadero, Valle de Guadalupe |
+| Roja | 🔴 | Ampliación Indeco (trazada) |
+| Azul | 🔵 | El Sauzal (trazada); Maneadero y Valle de Guadalupe pendientes |
 | Amarilla | 🟡 | Pendiente |
 | Naranja | 🟠 | Pendiente |
 
 ## Mapa
-El mapa está en `docs/index.html` (Leaflet + OpenStreetMap). Para verlo localmente:
+El mapa está publicado con GitHub Pages en https://christopherargenis.github.io/Buses_Ensenada/
+(se genera desde `docs/index.html`, con Leaflet + OpenStreetMap). Para verlo localmente:
 
 ```bash
 cd docs && python3 -m http.server 8000
